@@ -1,0 +1,13 @@
+{
+  "name": "render-node-demo",
+  "version": "1.0.0",
+  "description": "A demo Node.js server for Render deployment",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}
