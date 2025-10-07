@@ -1,5 +1,6 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
+import path from "path";
 
 import type { PaymentTokenResponse } from "@paypal/paypal-server-sdk";
 
@@ -16,6 +17,11 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// Serve the default route with index.html
+app.get("/", (_req: Request, res: Response) => {
+  res.sendFile(path.join(__dirname, "../index.html"));
+});
 
 /* ######################################################################
  * API Endpoints for the client-side JavaScript PayPal Integration code
