@@ -3,9 +3,97 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>PayPal FraudNet</title>
 </head>
 <body>
-    hello paypal fraudnet
+  <script>
+    const FRAUD_NET_SCRIPT_NAME = "paypal-fraud-net";
+    const FRAUD_NET_URL = "https://c.paypal.com/da/r/fb.js";
+    const FRAUD_NET_FNCLS = "fnparams-dede7cc5-15fd-4c75-a9f4-36c430ee3a99";
+
+    console.log("iframe loaded");
+
+    function trackCopilotError(config) {
+      console.error("Copilot Error:", config);
+    }
+
+    function loadPayPalFraudNetScript() {
+      const startTime = performance.now();
+      const jsScript = document.createElement("script");
+
+      if (FRAUD_NET_URL) {
+        jsScript.src = FRAUD_NET_URL;
+        jsScript.async = true;
+        document.head.appendChild(jsScript);
+      }
+
+      jsScript.onerror = () => {
+        trackCopilotError({
+          feature: "paypal-native-checkout",
+          scenario: "loadPayPalFraudNetScript",
+          errorMessage: "script load error is undefined",
+          customData: `now:${performance.now()} startTime:${startTime}`,
+        });
+      };
+
+      return jsScript;
+    }
+
+    function loadPayPalFraudNetConfigScript(sessionId, pageId) {
+      const configScript = document.createElement("script");
+      configScript.type = "application/json";
+      configScript.setAttribute("fncls", FRAUD_NET_FNCLS);
+
+      const scriptString = JSON.stringify(
+        {
+          f: sessionId,
+          s: pageId,
+        },
+        null,
+        4,
+      );
+
+      if (scriptString) {
+        configScript.text = scriptString;
+        document.head.appendChild(configScript);
+      } else {
+        trackCopilotError({
+          feature: "paypal-native-checkout",
+          scenario: "loadPayPalFraudNetConfigScript",
+          errorMessage: "scriptContent is undefined",
+          customData: `sessionId: ${sessionId}, pageId: ${pageId}`,
+        });
+      }
+
+      return configScript;
+    }
+
+    // Listen for messages from parent window
+    window.addEventListener('message', function(event) {
+      try {
+        console.log("iframe event", event);
+        // Parse the JSON message
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        
+        // Check if the message contains sessionId and pageId
+        if (data && data.sessionId && data.pageId) {
+          console.log('Received session data:', data);
+          
+          // Load PayPal FraudNet config script with the received session data
+          loadPayPalFraudNetConfigScript(data.sessionId, data.pageId);
+          loadPayPalFraudNetScript();
+        } else {
+          console.log('Received message without required fields:', data);
+        }
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    });
+
+    // Let parent know this iframe is ready
+    if (window.parent !== window) {
+      window.parent.postMessage('iframe-ready', '*');
+    }
+    </script>
 </body>
 </html>
